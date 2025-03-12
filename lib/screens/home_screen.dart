@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:path_drawing/path_drawing.dart';
@@ -42,6 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final gameState = Provider.of<GameState>(context);
     final screenSize = MediaQuery.of(context).size;
     final isEnglish = gameState.isEnglish;
+    
+    // Web版本特定的尺寸调整
+    final logoSize = kIsWeb 
+        ? screenSize.width * 0.4 // Web版本减小Logo尺寸
+        : screenSize.width * 0.6;
+    
+    // Web版本特定的内边距调整    
+    final horizontalPadding = kIsWeb 
+        ? EdgeInsets.symmetric(horizontal: screenSize.width * 0.2) // Web版本增大侧边距
+        : const EdgeInsets.symmetric(horizontal: 40);
     
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
@@ -121,25 +132,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 游戏Logo
                   Expanded(
                     child: Center(
-                      child: SizedBox(
-                        width: screenSize.width * 0.6,
-                        height: screenSize.width * 0.6,
-                        child: CustomPaint(
-                          painter: HomeLogo(isEnglish: isEnglish),
-                        ),
-                      )
-                      .animate()
-                      .scale(
-                        delay: const Duration(milliseconds: 200),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.elasticOut,
-                      ),
+                      child: kIsWeb
+                          // Web版本的Logo使用不同的尺寸和布局约束
+                          ? ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: logoSize,
+                                maxHeight: logoSize,
+                              ),
+                              child: CustomPaint(
+                                painter: HomeLogo(isEnglish: isEnglish),
+                              ),
+                            )
+                          // 移动版本的原始Logo
+                          : SizedBox(
+                              width: logoSize,
+                              height: logoSize,
+                              child: CustomPaint(
+                                painter: HomeLogo(isEnglish: isEnglish),
+                              ),
+                            ),
+                    )
+                    .animate()
+                    .scale(
+                      delay: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.elasticOut,
                     ),
                   ),
                   
                   // 菜单按钮
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    padding: horizontalPadding,
                     child: Column(
                       children: [
                         // 开始游戏按钮
@@ -211,7 +234,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 40),
+                  // 调整底部空间，在Web版本上增加更多
+                  SizedBox(height: kIsWeb ? 60 : 40),
                 ],
               ),
               
@@ -266,11 +290,17 @@ class HomeLogo extends CustomPainter {
     // 创建变换矩阵
     final Matrix4 matrix = Matrix4.identity();
     
-    // 居中并缩放
-    final double scale = size.width / bounds.width * 0.8;
+    // Web版本特定的缩放和位置调整
+    final double scale = kIsWeb 
+        ? size.width / bounds.width * 0.75 // Web版本稍微缩小
+        : size.width / bounds.width * 0.8;
+        
+    // Web版本特定的偏移调整
+    final double offsetYAdjust = kIsWeb ? 15.0 : 0.0;
+    
     matrix.translate(
       center.dx - bounds.center.dx * scale, 
-      center.dy - bounds.center.dy * scale
+      center.dy - bounds.center.dy * scale + offsetYAdjust
     );
     matrix.scale(scale, scale);
     
@@ -278,7 +308,7 @@ class HomeLogo extends CustomPainter {
     final shadowMatrix = Matrix4.identity();
     shadowMatrix.translate(
       center.dx - bounds.center.dx * scale + 5, 
-      center.dy - bounds.center.dy * scale + 5
+      center.dy - bounds.center.dy * scale + 5 + offsetYAdjust
     );
     shadowMatrix.scale(scale, scale);
     canvas.drawPath(applePath.transform(shadowMatrix.storage), shadowPaint);
@@ -296,29 +326,40 @@ class HomeLogo extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     
-    // 对角线切割 - 从左上到右下，更整齐，向下移动一点
-    final lineStart = Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.35);
-    final lineEnd = Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.55);
-    canvas.drawLine(lineStart, lineEnd, linePaint);
+    // Web版本特定的切割线位置调整
+    final lineStartOffset = kIsWeb 
+        ? Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.25) 
+        : Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.35);
+    final lineEndOffset = kIsWeb 
+        ? Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.45) 
+        : Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.55);
     
-    // 添加一个"完美"标签
+    canvas.drawLine(lineStartOffset, lineEndOffset, linePaint);
+    
+    // 添加一个"完美"标签 - Web版本调整位置
     final perfectPaint = Paint()
       ..color = Colors.green
       ..style = PaintingStyle.fill;
     
-    final radius = size.width * 0.4; // 保留原来的比例计算
+    final radius = size.width * 0.4;
+    
+    // Web版本特定的"完美"标签位置调整
+    final perfectXOffset = kIsWeb ? 0.45 : 0.4;
+    final perfectYOffset = kIsWeb ? 0.5 : 0.7;
+    
     final perfectPath = Path()
-      ..moveTo(center.dx + radius * 0.4, center.dy - radius * 0.7)
-      ..lineTo(center.dx + radius * 0.7, center.dy - radius * 0.7)
-      ..lineTo(center.dx + radius * 0.7, center.dy - radius * 0.4)
-      ..lineTo(center.dx + radius * 0.4, center.dy - radius * 0.4)
+      ..moveTo(center.dx + radius * perfectXOffset, center.dy - radius * perfectYOffset)
+      ..lineTo(center.dx + radius * (perfectXOffset + 0.3), center.dy - radius * perfectYOffset)
+      ..lineTo(center.dx + radius * (perfectXOffset + 0.3), center.dy - radius * (perfectYOffset - 0.3))
+      ..lineTo(center.dx + radius * perfectXOffset, center.dy - radius * (perfectYOffset - 0.3))
       ..close();
     
     canvas.drawPath(perfectPath, perfectPaint);
     
-    const perfectTextStyle = TextStyle(
+    // 文字大小调整
+    final perfectTextStyle = TextStyle(
       color: Colors.white,
-      fontSize: 14,
+      fontSize: kIsWeb ? 16 : 14, // Web版本字体大小稍大
       fontWeight: FontWeight.bold,
     );
     
@@ -336,21 +377,27 @@ class HomeLogo extends CustomPainter {
     perfectTextPainter.paint(
       canvas,
       Offset(
-        center.dx + radius * 0.42,
-        center.dy - radius * 0.63,
+        center.dx + radius * (perfectXOffset + 0.02),
+        center.dy - radius * (perfectYOffset - 0.07),
       ),
     );
     
-    // 文字 - 百分比
-    const textStyle = TextStyle(
+    // 百分比文字 - Web版本调整位置
+    final percentTextStyle = TextStyle(
       color: Colors.white,
-      fontSize: 25,
+      fontSize: kIsWeb ? 28 : 25, // Web版本字体大小稍大
       fontWeight: FontWeight.bold,
     );
     
+    // Web版本特定的百分比位置调整
+    final percent1XOffset = kIsWeb ? -0.3 : -0.5;
+    final percent1YOffset = kIsWeb ? 0.1 : -0.40;
+    final percent2XOffset = kIsWeb ? 0.1 : 0.05;
+    final percent2YOffset = kIsWeb ? -0.1 : -0.25;
+    
     final textSpan1 = TextSpan(
       text: '50%',
-      style: textStyle,
+      style: percentTextStyle,
     );
     
     final textPainter1 = TextPainter(
@@ -361,12 +408,12 @@ class HomeLogo extends CustomPainter {
     textPainter1.layout();
     textPainter1.paint(
       canvas,
-      Offset(center.dx - radius * 0.5, center.dy - radius * -0.40),
+      Offset(center.dx + radius * percent1XOffset, center.dy + radius * percent1YOffset),
     );
     
     final textSpan2 = TextSpan(
       text: '50%',
-      style: textStyle,
+      style: percentTextStyle,
     );
     
     final textPainter2 = TextPainter(
@@ -377,7 +424,7 @@ class HomeLogo extends CustomPainter {
     textPainter2.layout();
     textPainter2.paint(
       canvas,
-      Offset(center.dx + radius * 0.05, center.dy + radius * -0.25),
+      Offset(center.dx + radius * percent2XOffset, center.dy + radius * percent2YOffset),
     );
   }
 

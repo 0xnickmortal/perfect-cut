@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_animate/flutter_animate.dart';
 
 class MenuButton extends StatelessWidget {
@@ -19,12 +20,17 @@ class MenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Web版本特定的尺寸调整
+    final buttonHeight = kIsWeb ? 70.0 : 60.0;
+    final iconSize = kIsWeb ? 32.0 : 28.0;
+    final fontSize = kIsWeb ? 22.0 : 20.0;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
       child: Container(
         width: double.infinity,
-        height: 60,
+        height: buttonHeight,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(15),
@@ -43,14 +49,14 @@ class MenuButton extends StatelessWidget {
             Icon(
               icon,
               color: Colors.white,
-              size: 28,
+              size: iconSize,
             ),
             const SizedBox(width: 16),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -58,7 +64,7 @@ class MenuButton extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               color: Colors.white.withOpacity(0.7),
-              size: 20,
+              size: kIsWeb ? 22.0 : 20.0,
             ),
             const SizedBox(width: 20),
           ],
