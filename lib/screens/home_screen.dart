@@ -133,14 +133,97 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Center(
                       child: kIsWeb
-                          // Web版本的Logo使用不同的尺寸和布局约束
-                          ? ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: logoSize,
-                                maxHeight: logoSize,
-                              ),
-                              child: CustomPaint(
-                                painter: HomeLogo(isEnglish: isEnglish),
+                          // Web版本的Logo使用不同的方式处理
+                          ? Container(
+                              width: logoSize,
+                              height: logoSize,
+                              child: Stack(
+                                children: [
+                                  // 使用CustomPaint作为首选方法
+                                  CustomPaint(
+                                    painter: HomeLogo(isEnglish: isEnglish),
+                                    size: Size(logoSize, logoSize),
+                                  ),
+                                  
+                                  // 备用方案：基本的Widget组合，如果CustomPaint不显示，这个会显示
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: Opacity(
+                                        opacity: 0.95,
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            // 阴影
+                                            Positioned(
+                                              left: 5,
+                                              top: 5,
+                                              child: Container(
+                                                width: logoSize * 0.7,
+                                                height: logoSize * 0.7,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withOpacity(0.15),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                            ),
+                                            
+                                            // 苹果主体
+                                            Container(
+                                              width: logoSize * 0.7,
+                                              height: logoSize * 0.7,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  // 水平切割线
+                                                  Container(
+                                                    height: 6,
+                                                    width: logoSize * 0.7,
+                                                    color: Colors.white,
+                                                  ),
+                                                  
+                                                  // 50%文字
+                                                  Positioned(
+                                                    bottom: logoSize * 0.25,
+                                                    child: Text(
+                                                      '50%',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 28,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            
+                                            // 绿色"完美"标签
+                                            Positioned(
+                                              top: logoSize * 0.15,
+                                              right: logoSize * 0.15,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(6),
+                                                color: Colors.green,
+                                                child: Text(
+                                                  tr('perfect', isEnglish),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             )
                           // 移动版本的原始Logo
@@ -293,10 +376,10 @@ class HomeLogo extends CustomPainter {
     
     // Web版本特定的切割线位置调整
     final lineStartOffset = kIsWeb 
-        ? Offset(center.dx - size.width * 0.4, center.dy - size.height * 0.1) 
+        ? Offset(center.dx - size.width * 0.35, center.dy) 
         : Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.35);
     final lineEndOffset = kIsWeb 
-        ? Offset(center.dx + size.width * 0.4, center.dy + size.height * 0.3) 
+        ? Offset(center.dx + size.width * 0.35, center.dy) 
         : Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.55);
     
     canvas.drawLine(lineStartOffset, lineEndOffset, linePaint);
@@ -307,8 +390,8 @@ class HomeLogo extends CustomPainter {
       ..style = PaintingStyle.fill;
     
     // Web版本特定的"完美"标签位置调整
-    final perfectXOffset = kIsWeb ? 0.2 : 0.4;
-    final perfectYOffset = kIsWeb ? 0.4 : 0.7;
+    final perfectXOffset = kIsWeb ? 0.3 : 0.4;
+    final perfectYOffset = kIsWeb ? 0.3 : 0.7;
     
     final perfectPath = Path()
       ..moveTo(center.dx + radius * perfectXOffset, center.dy - radius * perfectYOffset)
@@ -353,42 +436,60 @@ class HomeLogo extends CustomPainter {
     );
     
     // Web版本特定的百分比位置调整
-    final percent1XOffset = kIsWeb ? -0.2 : -0.5;
-    final percent1YOffset = kIsWeb ? 0.25 : -0.40;
-    final percent2XOffset = kIsWeb ? 0.0 : 0.05;
-    final percent2YOffset = kIsWeb ? -0.05 : -0.25;
+    final percent1XOffset = kIsWeb ? 0.0 : -0.5;
+    final percent1YOffset = kIsWeb ? -0.3 : -0.40;
     
-    final textSpan1 = TextSpan(
-      text: '50%',
-      style: percentTextStyle,
-    );
-    
-    final textPainter1 = TextPainter(
-      text: textSpan1,
-      textDirection: TextDirection.ltr,
-    );
-    
-    textPainter1.layout();
-    textPainter1.paint(
-      canvas,
-      Offset(center.dx + radius * percent1XOffset, center.dy + radius * percent1YOffset),
-    );
-    
-    final textSpan2 = TextSpan(
-      text: '50%',
-      style: percentTextStyle,
-    );
-    
-    final textPainter2 = TextPainter(
-      text: textSpan2,
-      textDirection: TextDirection.ltr,
-    );
-    
-    textPainter2.layout();
-    textPainter2.paint(
-      canvas,
-      Offset(center.dx + radius * percent2XOffset, center.dy + radius * percent2YOffset),
-    );
+    // 在Web版本上只显示一个50%
+    if (kIsWeb) {
+      final textSpan = TextSpan(
+        text: '50%',
+        style: percentTextStyle,
+      );
+      
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(center.dx - textPainter.width / 2, center.dy + radius * percent1YOffset),
+      );
+    } else {
+      // 非Web版本显示两个百分比
+      final textSpan1 = TextSpan(
+        text: '50%',
+        style: percentTextStyle,
+      );
+      
+      final textPainter1 = TextPainter(
+        text: textSpan1,
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter1.layout();
+      textPainter1.paint(
+        canvas,
+        Offset(center.dx + radius * -0.5, center.dy + radius * -0.40),
+      );
+      
+      final textSpan2 = TextSpan(
+        text: '50%',
+        style: percentTextStyle,
+      );
+      
+      final textPainter2 = TextPainter(
+        text: textSpan2,
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter2.layout();
+      textPainter2.paint(
+        canvas,
+        Offset(center.dx + radius * 0.05, center.dy + radius * -0.25),
+      );
+    }
   }
   
   // 使用SVG路径绘制复杂的苹果形状（原始版本，用于非Web平台）
@@ -436,10 +537,10 @@ class HomeLogo extends CustomPainter {
   void _drawSimpleApple(Canvas canvas, Offset center, Size size) {
     final appleRadius = size.width * 0.35;
     
-    // 绘制苹果的阴影
+    // 基本阴影效果 - 只用偏移的圆形，不使用模糊效果
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..color = Colors.black.withOpacity(0.15)
+      ..style = PaintingStyle.fill;
     
     canvas.drawCircle(
       Offset(center.dx + 5, center.dy + 5), 
@@ -454,39 +555,31 @@ class HomeLogo extends CustomPainter {
     
     canvas.drawCircle(center, appleRadius, applePaint);
     
-    // 添加苹果顶部的凹槽
-    final notchPath = Path()
-      ..moveTo(center.dx - appleRadius * 0.2, center.dy - appleRadius * 0.9)
-      ..quadraticBezierTo(
-        center.dx, center.dy - appleRadius * 1.2,
-        center.dx + appleRadius * 0.2, center.dy - appleRadius * 0.9
-      )
-      ..quadraticBezierTo(
-        center.dx, center.dy - appleRadius * 0.7,
-        center.dx - appleRadius * 0.2, center.dy - appleRadius * 0.9
-      )
-      ..close();
+    // 绘制一个简单的矩形作为苹果顶部凹槽，而不是复杂的路径
+    final notchPaint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
     
-    canvas.drawPath(notchPath, applePaint);
+    final notchRect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy - appleRadius),
+      width: appleRadius * 0.5,
+      height: appleRadius * 0.4
+    );
     
-    // 添加苹果叶子
-    final leafPath = Path()
-      ..moveTo(center.dx + appleRadius * 0.1, center.dy - appleRadius * 0.9)
-      ..quadraticBezierTo(
-        center.dx + appleRadius * 0.3, center.dy - appleRadius * 1.3,
-        center.dx + appleRadius * 0.4, center.dy - appleRadius * 0.9
-      )
-      ..quadraticBezierTo(
-        center.dx + appleRadius * 0.3, center.dy - appleRadius * 1.0,
-        center.dx + appleRadius * 0.1, center.dy - appleRadius * 0.9
-      )
-      ..close();
+    canvas.drawOval(notchRect, notchPaint);
     
+    // 添加简单的矩形作为苹果叶子
     final leafPaint = Paint()
       ..color = Colors.green
       ..style = PaintingStyle.fill;
     
-    canvas.drawPath(leafPath, leafPaint);
+    final leafRect = Rect.fromCenter(
+      center: Offset(center.dx + appleRadius * 0.2, center.dy - appleRadius),
+      width: appleRadius * 0.3,
+      height: appleRadius * 0.4
+    );
+    
+    canvas.drawRect(leafRect, leafPaint);
   }
 
   @override
