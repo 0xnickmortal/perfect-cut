@@ -275,49 +275,14 @@ class HomeLogo extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.4;
     
-    // 背景阴影
-    final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    
-    // 使用ID 17关的SVG苹果路径
-    final applePath = parseSvgPathData("M 878 697C 873 711 868 725 862 739C 849 770 832 799 814 826C 788 862 767 887 751 901C 727 924 700 936 671 936C 651 936 626 930 597 919C 568 907 542 901 518 901C 492 901 465 907 436 919C 407 930 383 937 365 937C 338 938 310 926 283 901C 266 886 244 860 218 823C 190 784 167 738 149 686C 130 630 120 576 120 523C 120 463 133 411 159 367C 180 332 207 304 241 284C 275 264 312 253 352 253C 374 253 402 259 438 273C 473 286 496 293 506 293C 513 293 538 285 581 269C 621 255 656 249 683 251C 759 257 816 287 854 341C 786 382 753 439 753 513C 754 570 775 618 816 656C 834 674 855 687 878 697 M 688 55C 688 100 672 142 639 181C 600 227 552 254 500 250C 499 245 499 239 499 233C 499 190 518 143 551 106C 568 87 589 71 615 58C 640 45 665 38 688 37C 688 43 688 49 688 55");
-    
-    // 获取原始路径边界
-    final Rect bounds = applePath.getBounds();
-    
-    // 创建变换矩阵
-    final Matrix4 matrix = Matrix4.identity();
-    
-    // Web版本特定的缩放和位置调整
-    final double scale = kIsWeb 
-        ? size.width / bounds.width * 0.75 // Web版本稍微缩小
-        : size.width / bounds.width * 0.8;
-        
-    // Web版本特定的偏移调整
-    final double offsetYAdjust = kIsWeb ? 15.0 : 0.0;
-    
-    matrix.translate(
-      center.dx - bounds.center.dx * scale, 
-      center.dy - bounds.center.dy * scale + offsetYAdjust
-    );
-    matrix.scale(scale, scale);
-    
-    // 绘制阴影
-    final shadowMatrix = Matrix4.identity();
-    shadowMatrix.translate(
-      center.dx - bounds.center.dx * scale + 5, 
-      center.dy - bounds.center.dy * scale + 5 + offsetYAdjust
-    );
-    shadowMatrix.scale(scale, scale);
-    canvas.drawPath(applePath.transform(shadowMatrix.storage), shadowPaint);
-    
-    // 绘制苹果
-    final paint = Paint()
-      ..color = Colors.red
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(applePath.transform(matrix.storage), paint);
+    // Web版本使用简化的苹果形状
+    if (kIsWeb) {
+      _drawSimpleApple(canvas, center, size);
+    } else {
+      _drawSvgApple(canvas, center, size);
+    }
     
     // 切割线
     final linePaint = Paint()
@@ -328,10 +293,10 @@ class HomeLogo extends CustomPainter {
     
     // Web版本特定的切割线位置调整
     final lineStartOffset = kIsWeb 
-        ? Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.25) 
+        ? Offset(center.dx - size.width * 0.4, center.dy - size.height * 0.1) 
         : Offset(center.dx - size.width * 0.45, center.dy - size.height * 0.35);
     final lineEndOffset = kIsWeb 
-        ? Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.45) 
+        ? Offset(center.dx + size.width * 0.4, center.dy + size.height * 0.3) 
         : Offset(center.dx + size.width * 0.45, center.dy + size.height * 0.55);
     
     canvas.drawLine(lineStartOffset, lineEndOffset, linePaint);
@@ -341,11 +306,9 @@ class HomeLogo extends CustomPainter {
       ..color = Colors.green
       ..style = PaintingStyle.fill;
     
-    final radius = size.width * 0.4;
-    
     // Web版本特定的"完美"标签位置调整
-    final perfectXOffset = kIsWeb ? 0.45 : 0.4;
-    final perfectYOffset = kIsWeb ? 0.5 : 0.7;
+    final perfectXOffset = kIsWeb ? 0.2 : 0.4;
+    final perfectYOffset = kIsWeb ? 0.4 : 0.7;
     
     final perfectPath = Path()
       ..moveTo(center.dx + radius * perfectXOffset, center.dy - radius * perfectYOffset)
@@ -390,10 +353,10 @@ class HomeLogo extends CustomPainter {
     );
     
     // Web版本特定的百分比位置调整
-    final percent1XOffset = kIsWeb ? -0.3 : -0.5;
-    final percent1YOffset = kIsWeb ? 0.1 : -0.40;
-    final percent2XOffset = kIsWeb ? 0.1 : 0.05;
-    final percent2YOffset = kIsWeb ? -0.1 : -0.25;
+    final percent1XOffset = kIsWeb ? -0.2 : -0.5;
+    final percent1YOffset = kIsWeb ? 0.25 : -0.40;
+    final percent2XOffset = kIsWeb ? 0.0 : 0.05;
+    final percent2YOffset = kIsWeb ? -0.05 : -0.25;
     
     final textSpan1 = TextSpan(
       text: '50%',
@@ -426,6 +389,104 @@ class HomeLogo extends CustomPainter {
       canvas,
       Offset(center.dx + radius * percent2XOffset, center.dy + radius * percent2YOffset),
     );
+  }
+  
+  // 使用SVG路径绘制复杂的苹果形状（原始版本，用于非Web平台）
+  void _drawSvgApple(Canvas canvas, Offset center, Size size) {
+    // 背景阴影
+    final shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.2)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    
+    // 使用ID 17关的SVG苹果路径
+    final applePath = parseSvgPathData("M 878 697C 873 711 868 725 862 739C 849 770 832 799 814 826C 788 862 767 887 751 901C 727 924 700 936 671 936C 651 936 626 930 597 919C 568 907 542 901 518 901C 492 901 465 907 436 919C 407 930 383 937 365 937C 338 938 310 926 283 901C 266 886 244 860 218 823C 190 784 167 738 149 686C 130 630 120 576 120 523C 120 463 133 411 159 367C 180 332 207 304 241 284C 275 264 312 253 352 253C 374 253 402 259 438 273C 473 286 496 293 506 293C 513 293 538 285 581 269C 621 255 656 249 683 251C 759 257 816 287 854 341C 786 382 753 439 753 513C 754 570 775 618 816 656C 834 674 855 687 878 697 M 688 55C 688 100 672 142 639 181C 600 227 552 254 500 250C 499 245 499 239 499 233C 499 190 518 143 551 106C 568 87 589 71 615 58C 640 45 665 38 688 37C 688 43 688 49 688 55");
+    
+    // 获取原始路径边界
+    final Rect bounds = applePath.getBounds();
+    
+    // 创建变换矩阵
+    final Matrix4 matrix = Matrix4.identity();
+    
+    // 缩放和位置调整
+    final double scale = size.width / bounds.width * 0.8;
+        
+    matrix.translate(
+      center.dx - bounds.center.dx * scale, 
+      center.dy - bounds.center.dy * scale
+    );
+    matrix.scale(scale, scale);
+    
+    // 绘制阴影
+    final shadowMatrix = Matrix4.identity();
+    shadowMatrix.translate(
+      center.dx - bounds.center.dx * scale + 5, 
+      center.dy - bounds.center.dy * scale + 5
+    );
+    shadowMatrix.scale(scale, scale);
+    canvas.drawPath(applePath.transform(shadowMatrix.storage), shadowPaint);
+    
+    // 绘制苹果
+    final paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(applePath.transform(matrix.storage), paint);
+  }
+  
+  // 使用简单形状绘制苹果（Web版本）
+  void _drawSimpleApple(Canvas canvas, Offset center, Size size) {
+    final appleRadius = size.width * 0.35;
+    
+    // 绘制苹果的阴影
+    final shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.2)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    
+    canvas.drawCircle(
+      Offset(center.dx + 5, center.dy + 5), 
+      appleRadius, 
+      shadowPaint
+    );
+    
+    // 绘制苹果主体（圆形）
+    final applePaint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawCircle(center, appleRadius, applePaint);
+    
+    // 添加苹果顶部的凹槽
+    final notchPath = Path()
+      ..moveTo(center.dx - appleRadius * 0.2, center.dy - appleRadius * 0.9)
+      ..quadraticBezierTo(
+        center.dx, center.dy - appleRadius * 1.2,
+        center.dx + appleRadius * 0.2, center.dy - appleRadius * 0.9
+      )
+      ..quadraticBezierTo(
+        center.dx, center.dy - appleRadius * 0.7,
+        center.dx - appleRadius * 0.2, center.dy - appleRadius * 0.9
+      )
+      ..close();
+    
+    canvas.drawPath(notchPath, applePaint);
+    
+    // 添加苹果叶子
+    final leafPath = Path()
+      ..moveTo(center.dx + appleRadius * 0.1, center.dy - appleRadius * 0.9)
+      ..quadraticBezierTo(
+        center.dx + appleRadius * 0.3, center.dy - appleRadius * 1.3,
+        center.dx + appleRadius * 0.4, center.dy - appleRadius * 0.9
+      )
+      ..quadraticBezierTo(
+        center.dx + appleRadius * 0.3, center.dy - appleRadius * 1.0,
+        center.dx + appleRadius * 0.1, center.dy - appleRadius * 0.9
+      )
+      ..close();
+    
+    final leafPaint = Paint()
+      ..color = Colors.green
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawPath(leafPath, leafPaint);
   }
 
   @override
